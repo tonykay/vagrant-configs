@@ -1,0 +1,62 @@
+---
+- name: Vagrant initial provision of bastion
+  hosts: all
+  become: yes
+  vars:
+    vbox_additions_dependencies:
+      - make 
+      - gcc 
+      - kernel-headers 
+      - kernel-devel 
+      - perl 
+      - dkms 
+      - bzip2
+
+    toolchain_packages:
+      - ansible
+      - git
+      - vim
+      - zsh
+      - jq
+      - tree
+
+    rhel_8_packages: "{{ vbox_additions_dependencies | union(toolchain_packages) }}"
+
+    rhel_8_repos:
+      - rhel-8-for-x86_64-baseos-rpms  
+      - rhel-8-for-x86_64-appstream-rpms
+      - ansible-2.9-for-rhel-8-x86_64-rpms  
+
+  vars_files:
+    - ~tok/secrets/rhel-subscription.yml
+
+  tasks:
+
+    - name: Activate RHEL subscription
+      redhat_subscription:
+        activationkey:         "{{ rhel_activationkey }}"
+        org_id:                 "{{ rhel_org_id }}"   
+#        auto_attach:           true
+#        username:              "{{ rhel_subscription_username }}"
+#        password:              "{{ rhel_subscription_password }}"
+      ignore_errors: true
+
+    - name: Disable all RHSM repositories
+      rhsm_repository:
+        name: '*'
+        state: disabled
+
+    - name: Enable repositories 
+      rhsm_repository:
+        name: "{{ __repos }}"
+        state: enabled
+      loop: "{{ rhel_8_repos }}"     
+      loop_control:
+        loop_var: __repos
+
+    - name: Install packages
+      yum:
+        name:     "{{ rhel_8_packages }}"
+        state:    present
+      ignore_errors: true
+...

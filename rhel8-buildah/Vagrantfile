@@ -1,0 +1,45 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Overwrite host locale in ssh session
+ENV["LC_ALL"] = "en_US.UTF-8"
+
+# Buildah host settings
+
+buildah_hostname = "buildah.v"
+buildah_ip = "192.168.60.38"
+buildah_box = "generic/rhel8"
+buildah_memory = 2048
+
+local_folder = "/Users/tok/repos"
+remote_mount = "/ansible"
+
+base_box = "generic/rhel8"
+
+Vagrant.configure("2") do |config|
+
+  # Avoid using the Virtualbox guest additions
+
+  if Vagrant.has_plugin?("vagrant-vbguest")
+    config.vbguest.auto_update = false
+  end
+
+  config.vm.define "buildah" do |buildah|    
+    buildah.vm.box = base_box
+    buildah.vm.hostname = buildah_hostname
+    buildah.vm.network "private_network", ip: buildah_ip
+    buildah.vm.synced_folder local_folder, remote_mount
+    buildah.ssh.insert_key = false
+    buildah.ssh.private_key_path = ["~/.vagrant.d/insecure_private_key"]
+
+    buildah.vm.provider :virtualbox do |vb|
+      vb.name = buildah_hostname
+      vb.memory = buildah_memory
+    end
+  end
+
+  config.vm.provision "ansible" do |ansible|
+     ansible.playbook = "vagrant-buildah.yml"
+  end
+end
+

@@ -1,0 +1,45 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Overwrite host locale in ssh session
+ENV["LC_ALL"] = "en_US.UTF-8"
+
+# Buildah host settings
+
+dev8_hostname = "dev8.v"
+dev8_ip = "192.168.60.39"
+dev8_box = "generic/rhel8"
+dev8_memory = 2048
+
+local_folder = "/Users/tok/repos"
+remote_mount = "/repos/"
+
+base_box = "generic/rhel8"
+
+Vagrant.configure("2") do |config|
+
+  # Avoid using the Virtualbox guest additions
+
+  if Vagrant.has_plugin?("vagrant-vbguest")
+    config.vbguest.auto_update = false
+  end
+
+  config.vm.define "dev8" do |dev8|    
+    dev8.vm.box = base_box
+    dev8.vm.hostname = dev8_hostname
+    dev8.vm.network "private_network", ip: dev8_ip
+    dev8.vm.synced_folder local_folder, remote_mount
+    dev8.ssh.insert_key = false
+    dev8.ssh.private_key_path = ["~/.vagrant.d/insecure_private_key"]
+
+    dev8.vm.provider :virtualbox do |vb|
+      vb.name = dev8_hostname
+      vb.memory = dev8_memory
+    end
+  end
+
+  config.vm.provision "ansible" do |ansible|
+     ansible.playbook = "provision-dev8.yml"
+  end
+end
+
