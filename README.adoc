@@ -1,0 +1,10 @@
+== Overview
+
+A simple colelction of working `Vagrantfiles` and Ansible provisioning playbooks.
+
+[NOTE]
+====
+
+They have hard coded IPs and I use the host updater plugin which adds, and removes, them from /etc/hosts
+
+====
